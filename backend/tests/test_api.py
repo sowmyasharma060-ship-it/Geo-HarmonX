@@ -92,37 +92,6 @@ def test_sqlite_remains_the_default_backend(monkeypatch):
     assert storage.storage_backend() == 'sqlite'
 
 
-def test_assistant_remembers_parcel_context_after_api_client_restart(client):
-    first = client.post('/api/assistant/chat', json={
-        'session_id': 'test-session-1234',
-        'message': 'Tell me about parcel 704-B.',
-    })
-    assert first.status_code == 200
-    assert '704-B' in first.json()['reply']
-
-    with TestClient(app) as restarted_client:
-        follow_up = restarted_client.post('/api/assistant/chat', json={
-            'session_id': 'test-session-1234',
-            'message': 'What is its score?',
-        })
-
-    assert follow_up.status_code == 200
-    assert '704-B' in follow_up.json()['reply']
-    assert 'not been analyzed yet' in follow_up.json()['reply']
-    assert follow_up.json()['remembered_messages'] == 4
-    history = restarted_client.get('/api/assistant/session/test-session-1234')
-    assert len(history.json()['messages']) == 4
-
-
-def test_assistant_rejects_invalid_session_identifiers(client):
-    response = client.post('/api/assistant/chat', json={
-        'session_id': 'bad session id',
-        'message': 'How do I import a parcel?',
-    })
-
-    assert response.status_code == 422
-
-
 def test_local_frontend_ports_can_call_api(client):
     response = client.options(
         '/api/overview',
@@ -134,17 +103,6 @@ def test_local_frontend_ports_can_call_api(client):
 
     assert response.status_code == 200
     assert response.headers['access-control-allow-origin'] == 'http://localhost:5174'
-
-
-def test_assistant_answers_with_grounded_parcel_identity(client):
-    response = client.post('/api/assistant/chat', json={
-        'session_id': 'grounded-test-123',
-        'message': 'Who owns parcel 704-B and what is its status?',
-    })
-
-    assert response.status_code == 200
-    assert 'Heritage Realty Corp' in response.json()['reply']
-    assert 'Inspection Complete' in response.json()['reply']
 
 
 def test_review_decision_updates_metrics_and_is_audited(client):

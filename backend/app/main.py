@@ -3,11 +3,10 @@ from math import isfinite
 import os
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Path as PathParam, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from app.assistant import answer_question
 from app.geometry import GeometryInputError, analyze_parcels, normalize_geometry
 from app.storage import load_state, save_state, storage_backend
 
@@ -36,11 +35,6 @@ class ReviewDecision(BaseModel):
     decision: Literal['approve', 'reject', 'escalate']
     actor: str = Field(default='Review Officer', min_length=1, max_length=100)
     note: str = Field(default='', max_length=1000)
-
-
-class AssistantChat(BaseModel):
-    session_id: str = Field(min_length=8, max_length=80, pattern=r'^[a-zA-Z0-9_-]+$')
-    message: str = Field(min_length=1, max_length=2000)
 
 
 def add_audit_event(state: dict, action: str, parcel_id: str, actor: str, detail: str) -> None:
@@ -133,33 +127,6 @@ def get_audit_events():
 @app.get('/api/harmonization')
 def get_harmonization():
     return load_state().get('harmonization', [])
-
-
-@app.post('/api/assistant/chat')
-def assistant_chat(message: AssistantChat):
-    state = load_state()
-    sessions = state.setdefault('assistant_sessions', {})
-    history = sessions.get(message.session_id, [])
-    result = answer_question(message.message, state, history)
-    history.extend([
-        {'role': 'user', 'content': message.message},
-        {'role': 'assistant', 'content': result['answer'], 'sources': result['sources']},
-    ])
-    sessions[message.session_id] = history[-40:]
-    save_state(state)
-    return {
-        'session_id': message.session_id,
-        'reply': result['answer'],
-        'sources': result['sources'],
-        'mode': result['mode'],
-        'remembered_messages': len(sessions[message.session_id]),
-    }
-
-
-@app.get('/api/assistant/session/{session_id}')
-def get_assistant_session(session_id: str = PathParam(min_length=8, max_length=80, pattern=r'^[a-zA-Z0-9_-]+$')):
-    state = load_state()
-    return {'session_id': session_id, 'messages': state.get('assistant_sessions', {}).get(session_id, [])}
 
 
 @app.get('/api/parcel/{parcel_id}')

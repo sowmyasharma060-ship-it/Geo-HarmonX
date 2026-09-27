@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {
-  Activity, AlertTriangle, ArrowDownToLine, Bot, Check, CheckCheck, ChevronDown,
-  Clock3, Database, Eye, ExternalLink, Filter, Gauge, Layers3, Map, MapPinned,
-  MessageCircle, Search, Send, ShieldCheck, Sparkles, Upload, X,
+  Activity, AlertTriangle, ArrowDownToLine, Check, CheckCheck, ChevronDown,
+  Clock3, Database, Eye, Filter, Gauge, Layers3, Map, MapPinned,
+  Search, ShieldCheck, Sparkles, Upload, X,
 } from 'lucide-react'
 import MapView from './map-view'
 
@@ -20,15 +20,6 @@ const QUICK_SAMPLES = [
   { id: 'nearby', fileName: 'nearby-boundary.geojson', label: 'Nearby boundary', path: '/samples/nearby-boundary.geojson', crs: 'EPSG:4326', description: 'A nearby non-overlapping parcel tests proximity matching.' },
   { id: 'mercator', fileName: 'web-mercator.geojson', label: 'Web Mercator import', path: '/samples/web-mercator.geojson', crs: 'EPSG:3857', description: 'Projected coordinates test CRS normalization into WGS 84.' },
 ]
-
-function getAssistantSessionId() {
-  const storageKey = 'landsync-assistant-session'
-  const existing = window.localStorage.getItem(storageKey)
-  if (existing) return existing
-  const created = globalThis.crypto?.randomUUID?.() || `session-${Date.now()}-${Math.random().toString(36).slice(2)}`
-  window.localStorage.setItem(storageKey, created)
-  return created
-}
 
 async function api(path, options) {
   const response = await fetch(`${API_URL}${path}`, options)
@@ -95,24 +86,6 @@ function SamplePreview({ preview, busy, onClose, onImport }) {
   )
 }
 
-function AssistantPanel({ messages, input, busy, onInput, onClose, onSend, endRef }) {
-  const suggestions = ['What is the spatial score?', 'Which parcels need review?', 'Why did a boundary get flagged?']
-  return (
-    <section className="assistant-panel" aria-label="LandSync spatial assistant">
-      <header className="assistant-header"><div className="assistant-brand"><span className="assistant-avatar"><Bot size={18} /></span><span><strong>LandSync assistant</strong><small><span className="online-indicator" /> Workspace-aware · remembers this chat</small></span></div><button className="icon-button" aria-label="Close assistant" onClick={onClose}><X size={17} /></button></header>
-      <div className="assistant-disclosure">Answers use this workspace and may search Wikipedia for general geospatial references. Verify standards with their issuing authority.</div>
-      <div className="assistant-messages" aria-live="polite">
-        {!messages.length && <div className="assistant-welcome"><span className="welcome-mark"><Sparkles size={20} /></span><strong>What would you like to inspect?</strong><p>Ask about a parcel, a geometry flag, coordinate systems, or the review workflow.</p><div className="assistant-suggestions">{suggestions.map((suggestion) => <button key={suggestion} disabled={busy} onClick={() => onSend(suggestion)}>{suggestion}</button>)}</div></div>}
-        {messages.map((message, index) => <article className={`assistant-message ${message.role}`} key={`${message.role}-${index}`}><span className="message-role">{message.role === 'user' ? 'YOU' : 'LANDSYNC'}</span><p>{message.content}</p>{message.sources?.map((source) => <a className="assistant-source" href={source.url} target="_blank" rel="noreferrer" key={source.url}><ExternalLink size={12} /><span><strong>{source.title}</strong><small>{source.snippet}</small></span></a>)}</article>)}
-        {busy && <div className="assistant-thinking"><span /><span /><span /> Looking up workspace and public references</div>}
-        <div ref={endRef} />
-      </div>
-      <form className="assistant-composer" onSubmit={(event) => { event.preventDefault(); onSend() }}><textarea value={input} maxLength={2000} rows={2} placeholder="Ask about this workspace..." aria-label="Message LandSync assistant" onChange={(event) => onInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); onSend() } }} /><button className="send-button" type="submit" aria-label="Send message" disabled={!input.trim() || busy}><Send size={16} /></button></form>
-      <div className="assistant-footer">Workspace answers + public web references · Not a legal opinion</div>
-    </section>
-  )
-}
-
 function Dashboard() {
   const [view, setView] = useState('overview')
   const [overview, setOverview] = useState(null)
@@ -133,14 +106,7 @@ function Dashboard() {
   const [analyzing, setAnalyzing] = useState(false)
   const [notice, setNotice] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [assistantOpen, setAssistantOpen] = useState(false)
-  const [assistantSessionId] = useState(getAssistantSessionId)
-  const [assistantMessages, setAssistantMessages] = useState([])
-  const [assistantInput, setAssistantInput] = useState('')
-  const [assistantBusy, setAssistantBusy] = useState(false)
-  const [assistantLoaded, setAssistantLoaded] = useState(false)
   const searchRef = useRef(null)
-  const assistantEndRef = useRef(null)
   const selectedSample = QUICK_SAMPLES.find((sample) => sample.id === selectedSampleId) || QUICK_SAMPLES[0]
 
   async function refresh() {
@@ -182,10 +148,6 @@ function Dashboard() {
     const timer = window.setTimeout(() => setNotice(null), 5500)
     return () => window.clearTimeout(timer)
   }, [notice])
-
-  useEffect(() => {
-    assistantEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }, [assistantMessages, assistantBusy])
 
   const selectedParcel = parcels.find((parcel) => parcel.id === selectedId)
   const filteredParcels = parcels.filter((parcel) => {
@@ -281,38 +243,6 @@ function Dashboard() {
     }
   }
 
-  async function openAssistant() {
-    setAssistantOpen(true)
-    if (assistantLoaded) return
-    try {
-      const history = await api(`/assistant/session/${encodeURIComponent(assistantSessionId)}`)
-      setAssistantMessages(history.messages || [])
-      setAssistantLoaded(true)
-    } catch (error) {
-      setAssistantMessages([{ role: 'assistant', content: `I could not load saved chat history: ${error.message}` }])
-    }
-  }
-
-  async function sendAssistantMessage(message = assistantInput) {
-    const content = message.trim()
-    if (!content || assistantBusy) return
-    setAssistantInput('')
-    setAssistantBusy(true)
-    setAssistantMessages((current) => [...current, { role: 'user', content }])
-    try {
-      const result = await api('/assistant/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: assistantSessionId, message: content }),
-      })
-      setAssistantMessages((current) => [...current, { role: 'assistant', content: result.reply, sources: result.sources || [] }])
-    } catch (error) {
-      setAssistantMessages((current) => [...current, { role: 'assistant', content: `I could not complete that lookup: ${error.message}` }])
-    } finally {
-      setAssistantBusy(false)
-      setAssistantLoaded(true)
-    }
-  }
   async function runHarmonization() {
     setAnalyzing(true)
     try {
@@ -390,7 +320,6 @@ function Dashboard() {
             <label className="global-search"><Search size={16} /><input ref={searchRef} value={query} onChange={(event) => { setQuery(event.target.value); if (event.target.value) setView('parcels') }} placeholder="Search parcel, owner, source..." /><kbd>Ctrl K</kbd></label>
             <span className="header-status"><span className="online-indicator" /> {loading ? 'Syncing' : 'All systems normal'}</span>
             <button className="icon-button" aria-label="Refresh data" title="Refresh data" onClick={refresh}><Activity size={17} /></button>
-            <button className="user-button" aria-label="Open app assistant" title="Open app assistant" onClick={openAssistant}><MessageCircle size={18} /></button>
           </div>
         </header>
 
@@ -423,7 +352,6 @@ function Dashboard() {
         </div>
       </main>
       {samplePreview && <SamplePreview preview={samplePreview} busy={sampleBusy} onClose={() => setSamplePreview(null)} onImport={() => importQuickSample(samplePreview.sample)} />}
-      {assistantOpen ? <AssistantPanel messages={assistantMessages} input={assistantInput} busy={assistantBusy} onInput={setAssistantInput} onClose={() => setAssistantOpen(false)} onSend={sendAssistantMessage} endRef={assistantEndRef} /> : <button className="assistant-launcher" aria-label="Open LandSync assistant" title="Open LandSync assistant" onClick={openAssistant}><Bot size={21} /><span>Ask LandSync</span></button>}
     </div>
   )
 }
