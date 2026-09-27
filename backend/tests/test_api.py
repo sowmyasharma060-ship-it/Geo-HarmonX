@@ -123,6 +123,30 @@ def test_assistant_rejects_invalid_session_identifiers(client):
     assert response.status_code == 422
 
 
+def test_local_frontend_ports_can_call_api(client):
+    response = client.options(
+        '/api/overview',
+        headers={
+            'Origin': 'http://localhost:5174',
+            'Access-Control-Request-Method': 'GET',
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers['access-control-allow-origin'] == 'http://localhost:5174'
+
+
+def test_assistant_answers_with_grounded_parcel_identity(client):
+    response = client.post('/api/assistant/chat', json={
+        'session_id': 'grounded-test-123',
+        'message': 'Who owns parcel 704-B and what is its status?',
+    })
+
+    assert response.status_code == 200
+    assert 'Heritage Realty Corp' in response.json()['reply']
+    assert 'Inspection Complete' in response.json()['reply']
+
+
 def test_review_decision_updates_metrics_and_is_audited(client):
     pending_before = int(client.get('/api/overview').json()['metrics'][2]['value'])
     response = client.post('/api/review/P-704-B', json={'decision': 'approve', 'actor': 'Test Officer'})

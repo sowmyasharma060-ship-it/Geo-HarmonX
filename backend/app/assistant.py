@@ -45,8 +45,12 @@ def _parcel_context(question: str, history: list[dict], parcels: list[dict]) -> 
 
 def _parcel_summary(parcel: dict) -> str:
     assessment = parcel.get('assessment')
+    identity = (
+        f"Parcel {parcel['id']} is held by {parcel.get('owner', 'an unlisted holder')}, "
+        f"has status '{parcel.get('status', 'Unknown')}', and comes from {parcel.get('source', 'an unspecified source')}."
+    )
     if not assessment:
-        return f"Parcel {parcel['id']} is in status '{parcel.get('status', 'Unknown')}' and has not been analyzed yet. Run Analyze boundaries for calculated spatial metrics."
+        return f"{identity} It has not been analyzed yet. Run Analyze boundaries for calculated spatial metrics."
 
     score = assessment.get('match_score', 0)
     details = []
@@ -62,7 +66,7 @@ def _parcel_summary(parcel: dict) -> str:
         else:
             details.append(f"its measured footprint is {assessment.get('geometry_area_m2', 0):.2f} m2, with no nearby candidate")
     review_text = 'flagged for human review' if assessment.get('requires_review') else 'within the configured demo geometry thresholds'
-    return f"Parcel {parcel['id']} has a computed spatial score of {score:.1f}% and is {review_text}; " + '; '.join(details) + '. ' + ' '.join(assessment.get('reasons', []))
+    return f"{identity} Its computed spatial score is {score:.1f}% and it is {review_text}; " + '; '.join(details) + '. ' + ' '.join(assessment.get('reasons', []))
 
 
 def answer_question(question: str, state: dict, history: list[dict]) -> dict:
@@ -73,7 +77,17 @@ def answer_question(question: str, state: dict, history: list[dict]) -> dict:
     flagged = [item for item in state.get('harmonization', []) if item.get('requires_review')]
     references = []
 
-    if parcel and any(word in normalized for word in ('parcel', 'score', 'overlap', 'boundary', 'area', 'match', 'candidate', 'this', 'it')):
+    if any(greeting in normalized.split() for greeting in ('hi', 'hello', 'hey')):
+        answer = (
+            'I can answer from this workspace. Ask about a parcel, spatial score, boundary flags, review cases, '
+            'CRS imports, audit history, or how to use the workflow.'
+        )
+    elif normalized in {'help', 'what can you do', 'what do you do'}:
+        answer = (
+            'I inspect the loaded parcel records, explain geometry scores and review flags, summarize the review queue '
+            'and audit log, explain supported CRS values, and describe the import workflow. I do not make legal ownership or boundary determinations.'
+        )
+    elif parcel and any(word in normalized for word in ('parcel', 'score', 'overlap', 'boundary', 'area', 'match', 'candidate', 'owner', 'status', 'source', 'this', 'it')):
         answer = _parcel_summary(parcel)
     elif any(word in normalized for word in ('crs', 'coordinate', 'epsg', 'projection', 'web mercator', 'utm')):
         answer = (
