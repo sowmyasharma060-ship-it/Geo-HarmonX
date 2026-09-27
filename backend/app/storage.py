@@ -8,7 +8,12 @@ from urllib.parse import unquote, urlsplit
 
 from app.data import audit_events, conflicts, overview, parcels, queue
 
-DATABASE_PATH = Path(__file__).with_name('landsync-demo.sqlite3')
+DATABASE_PATH = Path(
+    os.getenv(
+        'LANDSYNC_DATABASE_PATH',
+        '/tmp/landsync-demo.sqlite3' if os.getenv('VERCEL') else str(Path(__file__).with_name('landsync-demo.sqlite3')),
+    )
+)
 _POSTGIS_READY = False
 _POSTGIS_LOCK = Lock()
 
