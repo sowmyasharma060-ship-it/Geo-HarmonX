@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import MapView from './map-view'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000/api' : '/api')
 const API_ROOT = API_URL.replace(/\/api\/?$/, '')
 const NAV_ITEMS = [
   { id: 'overview', label: 'Overview', icon: Activity },
