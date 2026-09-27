@@ -28,6 +28,22 @@ npm run dev
 
 Open `http://localhost:5173`. OpenAPI docs are at `http://localhost:8000/docs`.
 
+## Deploying the frontend to Vercel
+
+Vercel hosts the Vite frontend in this repository; the FastAPI backend must be deployed separately to a Python-capable host with durable storage. The included `vercel.json` builds the `frontend` directory when the Vercel project uses the repository root. Alternatively, set the Vercel Root Directory to `frontend` and use the standard Vite build settings. Add this build-time environment variable:
+
+```text
+VITE_API_URL=https://your-api-host.example.com/api
+```
+
+On the API host, set `LANDSYNC_CORS_ORIGINS` to the deployed Vercel origin and any local origins you still use, separated by commas:
+
+```text
+LANDSYNC_CORS_ORIGINS=https://your-project.vercel.app,http://localhost:5173
+```
+
+Do not use `localhost` as `VITE_API_URL` in the deployed frontend: in a browser, it refers to the visitor's computer, not the API host. Vite environment variables are embedded during the Vercel build, so redeploy after changing them.
+
 ## Demo workflow
 
 1. Use Overview to see the district snapshot, OSM map, source-boundary overlays, and pending reviews.

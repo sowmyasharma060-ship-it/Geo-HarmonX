@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from math import isfinite
+import os
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Path as PathParam, Query
@@ -12,9 +13,18 @@ from app.storage import load_state, save_state, storage_backend
 
 app = FastAPI(title='LandSync AI', version='0.1.0')
 
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        'LANDSYNC_CORS_ORIGINS',
+        'http://localhost:5173,http://127.0.0.1:5173',
+    ).split(',')
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['http://localhost:5173', 'http://127.0.0.1:5173'],
+    allow_origins=cors_origins,
     allow_credentials=False,
     allow_methods=['*'],
     allow_headers=['*'],
