@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "name": "Nearby boundary candidate",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "parcel_id": "DEMO-NEARBY-704",
+        "owner": "Neighbor Test Record",
+        "source": "Quick check: nearby boundary",
+        "area": 900
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.207650, 28.613000], [77.207950, 28.613000], [77.207950, 28.613250], [77.207650, 28.613250], [77.207650, 28.613000]]]
+      }
+    }
+  ]
+}

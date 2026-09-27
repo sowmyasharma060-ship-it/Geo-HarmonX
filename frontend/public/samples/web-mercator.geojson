@@ -1,0 +1,20 @@
+{
+  "type": "FeatureCollection",
+  "name": "Web Mercator reprojection check",
+  "source_crs": "EPSG:3857",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "parcel_id": "DEMO-3857-704",
+        "owner": "CRS Reprojection Test",
+        "source": "Quick check: EPSG:3857",
+        "area": 580
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[8594795.320, 3326506.574], [8594827.603, 3326506.574], [8594827.603, 3326529.400], [8594795.320, 3326529.400], [8594795.320, 3326506.574]]]
+      }
+    }
+  ]
+}

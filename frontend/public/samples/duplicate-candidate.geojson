@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "name": "Exact duplicate candidate",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "parcel_id": "DEMO-DUPLICATE-704",
+        "owner": "Duplicate Test Record",
+        "source": "Quick check: duplicate candidate",
+        "area": 1241.6
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.208000, 28.613000], [77.208410, 28.613000], [77.208410, 28.613279], [77.208000, 28.613279], [77.208000, 28.613000]]]
+      }
+    }
+  ]
+}

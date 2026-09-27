@@ -1,0 +1,20 @@
+services:
+  postgis:
+    image: postgis/postgis:16-3.5
+    environment:
+      POSTGRES_DB: landsync
+      POSTGRES_USER: landsync
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-landsync-local-dev-only}
+    ports:
+      - "5432:5432"
+    volumes:
+      - landsync_postgis_data:/var/lib/postgresql/data
+      - ./migrations/001_postgis.sql:/docker-entrypoint-initdb.d/001_postgis.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U landsync -d landsync"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  landsync_postgis_data:

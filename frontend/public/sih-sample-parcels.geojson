@@ -1,0 +1,32 @@
+{
+  "type": "FeatureCollection",
+  "name": "LandSync SIH demo parcels",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "parcel_id": "DEMO-OVERLAP-704",
+        "owner": "East Ridge Demo Cooperative",
+        "source": "SIH sample cadastral export",
+        "area": 560
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.208360, 28.613200], [77.208650, 28.613200], [77.208650, 28.613380], [77.208360, 28.613380], [77.208360, 28.613200]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "parcel_id": "DEMO-ISOLATED-2",
+        "owner": "East Ridge Demo Cooperative",
+        "source": "SIH sample municipal GIS",
+        "area": 480
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.220000, 28.630000], [77.220280, 28.630000], [77.220280, 28.630170], [77.220000, 28.630170], [77.220000, 28.630000]]]
+      }
+    }
+  ]
+}
